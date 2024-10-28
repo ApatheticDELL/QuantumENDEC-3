@@ -1317,6 +1317,7 @@ def createDefaultConfig():
     NewConfig = {
         "WebserverPort": "8050",
         "WebserverHost": "0.0.0.0",
+        "ProduceImages": False,
         "SAME_callsign": "QUANTUM0",
         "CGENcolor_warning": "ff2a2a",
         "CGENcolor_watch": "ffcc00",
