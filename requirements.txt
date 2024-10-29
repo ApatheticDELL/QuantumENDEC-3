@@ -1,0 +1,14 @@
+pyttsx3
+requests
+sounddevice
+scipy
+pydub
+EASGen
+EAS2Text
+matplotlib
+basemap
+discord_webhook
+ffmpeg-python
+soundfile
+numpy
+flask
