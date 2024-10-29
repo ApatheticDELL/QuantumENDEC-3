@@ -2012,11 +2012,11 @@ class Playout:
         except Exception as e: print("[Playout]: Can't play broadcast audio! ", e)
 
     def LEAD_IN(self):
-        try: self.playout(Assets_Folder + "/LeadIn.wav")
+        try: self.playout(Assets_Folder + "/pre.wav")
         except: pass
 
     def LEAD_OUT(self):
-        try: self.playout(Assets_Folder + "/LeadOut.wav")
+        try: self.playout(Assets_Folder + "/post.wav")
         except: pass
 
 class Logger:
