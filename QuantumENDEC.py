@@ -1,5 +1,5 @@
 # This is QuantumENDEC, devloped by ApatheticDELL alongside Aaron and BunnyTub
-QuantumENDEC_Version = "QuantumENDEC v5 Final Beta (Public Beta 10)"
+QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.2"
 
 XMLhistory_Folder = "./history" 
 XMLqueue_Folder = "./queue"
@@ -322,6 +322,7 @@ def createDefaultConfig():
     return True
 
 def DuplicateSAME(ZCZC):
+    """Returns True if there is a Duplicate SAME header (if header was already transmitted)"""
     file = f"{Tmp_Folder}/SameHistory.txt"
     try:
         with open(file, "r") as f:
@@ -538,7 +539,7 @@ def FilterCheck_CAP(InputConfig, AlertInfo):
     return ((InputConfig[f"severity{Severity}"] and InputConfig[f"urgency{Urgency}"]) or Broadcast_Immediately) and GecodeResult and Language_Result and not Expired
 
 def FilterCheck_SAME(ConfigData, ZCZC):
-    # Returns True if passed
+    """Returns True if the filter matches alert"""
     SAME_DICT = DeconstructSAME(ZCZC)
     EVENT = SAME_DICT['EventCode']
     
@@ -2197,7 +2198,11 @@ def RelayLoop():
                         if PlayoutAlerts:
                             Play = Playout(ConfigData, REGION)
                             if ConfigData['PlayoutNoSAME'] is False:
-                                if not FilterCheck_SAME(ConfigData, BroadcastContent['SAME']) and DuplicateSAME(BroadcastContent['SAME']): continue
+                                if not FilterCheck_SAME(ConfigData, BroadcastContent['SAME']): continue
+                                if DuplicateSAME(BroadcastContent['SAME']):
+                                    print("Duplicate S.A.M.E detected. Alert will be skipped.")
+                                    continue
+
                                 if IntroPlayed is False:
                                     Play.LEAD_IN()
                                     IntroPlayed = True
