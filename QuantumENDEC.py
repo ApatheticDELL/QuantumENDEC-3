@@ -1,5 +1,5 @@
 # This is QuantumENDEC, devloped by ApatheticDELL alongside Aaron and BunnyTub
-QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.2"
+QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.3"
 
 XMLhistory_Folder = "./history" 
 XMLqueue_Folder = "./queue"
@@ -2044,7 +2044,7 @@ class Logger:
 
             if self.ConfigData["ProduceImages"] is True:
                 try:
-                    with open(f"{Assets_Folder}/alertImage.png", "rb") as f: webhook.add_file(file=f.read(), filename="image.png")
+                    with open(f"{Tmp_Folder}/alertImage.png", "rb") as f: webhook.add_file(file=f.read(), filename="image.png")
                 except: pass
 
         if HookColor is None or HookColor == "": Wcolor = "ffffff"
