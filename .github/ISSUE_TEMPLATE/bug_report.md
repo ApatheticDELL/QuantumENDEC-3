@@ -24,8 +24,8 @@ Steps to reproduce the problem:
 If applicable, add screenshots to help explain your problem.
 
 **Operating system**
- - OS: [e.g. iOS]
- - Python version: [e.g. v3.11]
+ - OS: [e.g. Windows, Linux, TempleOS]
+ - Python version: [e.g. v3.11, v3.12]
 
 **Additional context**
 Add any other context about the problem here.
