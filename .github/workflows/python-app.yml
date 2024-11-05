@@ -27,4 +27,4 @@ jobs:
         pip install pyttsx3 requests sounddevice scipy pydub EASGen EAS2Text matplotlib basemap discord_webhook ffmpeg-python soundfile numpy flask
     - name: Test QuantumENDEC
       run: |
-        python .\QuantumENDEC.py
+        python ./QuantumENDEC.py
