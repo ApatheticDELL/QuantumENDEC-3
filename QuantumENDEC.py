@@ -1,5 +1,5 @@
 # This is QuantumENDEC, devloped by ApatheticDELL alongside Aaron and BunnyTub
-QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.3"
+QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.4"
 
 XMLhistory_Folder = "./history" 
 XMLqueue_Folder = "./queue"
@@ -550,6 +550,7 @@ def FilterCheck_SAME(ConfigData, ZCZC):
         if len(ConfigData['SAME_EVENTblocked']) == 0: EventBlocked = False
         else:
             if EVENT in ConfigData['SAME_EVENTblocked']: EventBlocked = True
+            else: EventBlocked = False
         
         if len(ConfigData['SAME_EVENTallowed']) == 0: EventAllowed = True
         else:
