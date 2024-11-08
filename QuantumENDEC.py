@@ -1,5 +1,5 @@
 # This is QuantumENDEC, devloped by ApatheticDELL alongside Aaron and BunnyTub
-QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.4"
+QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.5"
 
 XMLhistory_Folder = "./history" 
 XMLqueue_Folder = "./queue"
@@ -906,7 +906,6 @@ def RemoveEOMpATTN(AudioFile):
                         if freqlist[e + 1] < 810 or freqlist[e + 1] > 1070 and freqlist[e + 2] < 810 or freqlist[e + 2] > 1070 and freqlist[e + 3] < 810 or freqlist[e + 3] > 1070 and freqlist[e + 4] < 810 or freqlist[e + 4] > 1070 and freqlist[e + 5] < 810 or freqlist[e + 5] > 1070:
                             end_point = e
                             found = None
-        os.remove(AudioFile)
         if(found == None): pass
         else:
             gl = round(get_len(f"{AudioFile}.rmend"))
@@ -919,13 +918,17 @@ def RemoveEOMpATTN(AudioFile):
         threshold = lengthaudio - cut
         end = lengthaudio
         counter = 0
+        shutil.move(AudioFile, f"{AudioFile}.backup")
         while start < len(audio):
             end += threshold
             chunk = audio[start:end]
             chunk.export(AudioFile, format="wav")
             counter +=1
             start += threshold
-    except: pass
+        os.remove(f"{AudioFile}.backup")
+    except Exception as e:
+        print("Error in removing the attention tone or EOM header: ", e)
+        shutil.move(f"{AudioFile}.backup", AudioFile)
 
 def ZCZC_test(inp):
     inp = inp.split("-")
@@ -2185,6 +2188,9 @@ def RelayLoop():
                         Gen = Generate(ConfigData, InfoXML, msgType, sent)
                         BroadcastContent = Gen.GenerateTextContent()
                         AlertColor = GetAlertLevelColor(ConfigData, BroadcastContent['SAME'])
+
+                        if ConfigData['PlayoutNoSAME'] is False:
+                            if not FilterCheck_SAME(ConfigData, BroadcastContent['SAME']): continue
                         
                         print(f"\n\n[RELAY]: NEW ALERT TO RELAY...\n{BroadcastContent['HEADLINE']}: {BroadcastContent['TEXT']}\n{BroadcastContent['SAME']}\n\n")
                         if QEinterrupt() is True: break
@@ -2199,7 +2205,6 @@ def RelayLoop():
                         if PlayoutAlerts:
                             Play = Playout(ConfigData, REGION)
                             if ConfigData['PlayoutNoSAME'] is False:
-                                if not FilterCheck_SAME(ConfigData, BroadcastContent['SAME']): continue
                                 if DuplicateSAME(BroadcastContent['SAME']):
                                     print("Duplicate S.A.M.E detected. Alert will be skipped.")
                                     continue
