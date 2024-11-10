@@ -1,0 +1,15 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/config.json
+/assets/alertlog.txt
+/assets/AlertText.json
+/assets/audio.wav
+/assets/tmp
+/assets/stats
+/env
+/history
+/queue
+/relay.xml
