@@ -1,12 +1,10 @@
 ---
 name: Bug report
 about: Tell us about problems in QuantumENDEC
-title: ''
-labels: bug
+title: '[version of QuantumENDEC] Change the info so that it fits your issue!'
 assignees: ''
 
 ---
-
 **Describe the bug**
 What's the bug? Try to explain as much as possible so we can have as much information about it.
 
