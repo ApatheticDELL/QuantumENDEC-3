@@ -1380,7 +1380,7 @@ class Webserver:
             except:
                 return Response(status=404)
             
-        from flask import jsonify
+        # from flask import jsonify
 
         # @self.QEWEB_flaskapp.route('/stats/<path:path>')
         # def stats(path):
