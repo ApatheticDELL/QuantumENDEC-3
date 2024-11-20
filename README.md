@@ -26,8 +26,8 @@ You will first require the following...
 - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 ...to be installed on your System
 
-All the required python modules are in the 'requirements.txt' text file.
-If running on windows: You may also need pythoncom
+All the required Python modules are in the 'requirements.txt' text file.
+If running on Windows: You may also need pythoncom
 
 If you are using any of the SAME monitor functions with QuantumENDEC on linux: You need to install multimon-ng.
 The Multimon-NG binary for windows is included with QuantumENDEC.
