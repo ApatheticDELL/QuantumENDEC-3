@@ -21,8 +21,9 @@ QuantumENDEC is a Canadian CAP Emergency Alerting Software. Its primary goal is 
 ### Install
 Installing the QuantumENDEC is quite easy.
 You will first require the following...
-- FFMPEG
-- Python (3+)
+- [FFmpeg](https://www.ffmpeg.org/download.html#build-windows)
+- [Python](https://www.python.org/downloads/release/python-3119/) (3.11.9 or higher recommended)
+- [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
 ...to be installed on your System
 
 All the required python modules are in the 'requirements.txt' text file.
