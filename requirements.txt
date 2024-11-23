@@ -5,6 +5,7 @@ scipy
 pydub
 EASGen
 EAS2Text
+msvc-runtime
 matplotlib
 basemap
 discord_webhook
