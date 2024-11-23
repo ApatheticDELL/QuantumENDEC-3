@@ -21,9 +21,8 @@ QuantumENDEC is a Canadian CAP Emergency Alerting Software. Its primary goal is 
 ### Install
 Installing the QuantumENDEC is quite easy.
 
-You will need to have the following hardware...
-- Audio Output (Speaker)
-...to be connected
+> [!CAUTION]
+> QuantumENDEC must be run on a system with one or more audio output devices. It will most likely not function in an online environment, thus, issues with QuantumENDEC with online environments such as VS Code will be ignored.
 
 You will also require the following software...
 - [FFmpeg](https://www.ffmpeg.org/download.html#build-windows)
