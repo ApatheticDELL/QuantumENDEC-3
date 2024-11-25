@@ -20,6 +20,8 @@ def QEinterrupt():
 try: import pythoncom
 except: pass
 
+ConfigData = None
+
 try:
     import sys
     import os
@@ -43,11 +45,14 @@ try:
     from pydub import AudioSegment
     from EASGen import EASGen
     from EAS2Text import EAS2Text
-    import matplotlib
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.basemap import Basemap
-    from matplotlib.patches import Polygon
-    from matplotlib.lines import Line2D
+    with open(Config_File, "r") as JCfile: config = JCfile.read()
+    ConfigData = json.loads(config)
+    if ConfigData["ProduceImages"]:
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.basemap import Basemap
+        from matplotlib.patches import Polygon
+        from matplotlib.lines import Line2D
     import smtplib
     from discord_webhook import DiscordWebhook, DiscordEmbed
     from datetime import datetime
@@ -70,10 +75,10 @@ except ImportError as e:
     if nonimported_module:
         print(f"Couldn't import the {nonimported_module.group(1)} module. Please check that you have it installed!")
     else:
-        print(f"Couldn't import a module. Please check that your Python installation is not corrupted!")
+        print(f"Something went wrong. Please check that your Python installation is not corrupted!")
     sys.exit()
 except Exception as e:
-        print(f"Couldn't import a module. {e}")
+        print(f"Something went wrong. {e}")
         sys.exit()
 
 CapCatToSameOrg = { "Met": "WXR", "Admin": "EAS", "Other": "CIV", }
@@ -1275,7 +1280,6 @@ class Webserver:
         @self.QEWEB_flaskapp.route('/authenticated', methods=['GET'])
         def authenticated():
             response = make_response('', 200)
-            #response.status_code = 200
             return response # This returns 200, but won't if logged out, because this isn't a public path
 
         @self.QEWEB_flaskapp.route('/upload_config', methods=['POST'])
@@ -1828,10 +1832,13 @@ class AIOMG:
         if Fallback is True or InfoXML is None: shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
         else:
             try:
-                print("[AIOMG]: Generating image...")
-                if self.GrabImage(InfoXML) is True: pass
-                else: self.GenerateMapImage(InfoXML, InputColor)  
-                print("[AIOMG]: Image generation finished")
+                if "matplotlib" in sys.modules:
+                    print("[AIOMG]: Generating image...")
+                    if self.GrabImage(InfoXML) is True: pass
+                    else: self.GenerateMapImage(InfoXML, InputColor)
+                    print("[AIOMG]: Image generation finished")
+                else:
+                    raise("[AIOMG]: Plotting is enabled, but libraries not imported. Please restart QuantumENDEC!")
             except Exception as e:
                 print("[AIOMG]: Image generation failure: ", e)
                 shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
@@ -2204,11 +2211,11 @@ class Logger:
 
         print("[Logger]: Finished logging.")
 
+        #awesome
+
 def RelayLoop():
     while QEinterrupt() is False:
         Clear()
-        with open(Config_File, "r") as JCfile: config = JCfile.read()
-        ConfigData = json.loads(config)
         
         print(f"[RELAY]: Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         UpdateStatus("Relay", f"Waiting for alerts.", "IdleInfo")
