@@ -1,23 +1,9 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>QuantumENDEC Web Interface</title>
-    <link type="text/css" rel="stylesheet" href="/style.css" />
-    <script>
-        const checkLogonStatus = async () => {
-            try {
-                const response = await fetch("/authenticated");
-                if (!response.ok) {
-                    window.location.assign("/login.html");
-                }
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                window.location.assign("/login.html");
-            }
-        };
-        setInterval(checkLogonStatus, 5000);
-    </script>
-</head>
+    <head>
+        <title>QuantumENDEC Web Interface</title>
+        <link type="text/css" rel="stylesheet" href="/style.css"/>
+    </head>
     <body>
         <h1><img src="/logo.png" alt="QuantumENDEC logo" width="10%" height="10%"> QuantumENDEC Web Interface</h1>
         <nav>
