@@ -22,7 +22,7 @@ QuantumENDEC is a Canadian CAP Emergency Alerting Software. Its primary goal is 
 Installing the QuantumENDEC is quite easy.
 
 > [!CAUTION]
-> QuantumENDEC must be run on a system with one or more audio output devices. It will most likely not function in an online environment, thus, issues with QuantumENDEC inside of online environments such as github.dev may be ignored.
+> QuantumENDEC must be run on a system with one or more audio output devices. It will most likely not function in an online environment, thus, issues with QuantumENDEC inside of online environments such as github.dev may be ignored and closed.
 
 You will also require the following software...
 - [FFmpeg](https://www.ffmpeg.org/download.html#build-windows)
