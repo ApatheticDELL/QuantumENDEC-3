@@ -20,66 +20,56 @@ def QEinterrupt():
 try: import pythoncom
 except: pass
 
-ConfigData = None
+import re
+import pyttsx3
+import requests
+import shutil
+import time
+import socket
+import threading
+import json
+import os
+import argparse
+import base64
+import subprocess
+import importlib
+import signal
 
-try:
-    import sys
-    import os
-    import re
-    import pyttsx3
-    import requests
-    import shutil
-    import time
-    import socket
-    import threading
-    import json
-    import argparse
-    import base64
-    import subprocess
-    import importlib
-    import signal
-    import sounddevice as sd
-    from scipy.io import wavfile
-    from datetime import datetime, timezone, timedelta
-    from urllib.request import Request, urlopen
-    from pydub import AudioSegment
-    from EASGen import EASGen
-    from EAS2Text import EAS2Text
-    with open(Config_File, "r") as JCfile: config = JCfile.read()
-    ConfigData = json.loads(config)
-    if ConfigData["ProduceImages"]:
-        import matplotlib
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.basemap import Basemap
-        from matplotlib.patches import Polygon
-        from matplotlib.lines import Line2D
-    import smtplib
-    from discord_webhook import DiscordWebhook, DiscordEmbed
-    from datetime import datetime
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-    import random
-    import string
-    import queue
-    import wave
-    import contextlib
-    import ffmpeg
-    import soundfile as sf
-    from scipy.fft import *
-    import numpy
-    assert numpy
-    from flask import Flask, Response, request, jsonify, send_from_directory, redirect, url_for, make_response, session
-    import hashlib, secrets, logging
-except ImportError as e:
-    nonimported_module = re.search(r"No module named '(.+)'", str(e))
-    if nonimported_module:
-        print(f"Couldn't import the {nonimported_module.group(1)} module. Please check that you have it installed!")
-    else:
-        print(f"Something went wrong. Please check that your Python installation is not corrupted!")
-    sys.exit()
-except Exception as e:
-        print(f"Something went wrong. {e}")
-        sys.exit()
+import sounddevice as sd
+from scipy.io import wavfile
+from datetime import datetime, timezone, timedelta
+from urllib.request import Request, urlopen
+from pydub import AudioSegment
+from EASGen import EASGen
+from EAS2Text import EAS2Text
+
+import matplotlib
+import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
+from matplotlib.patches import Polygon
+from matplotlib.lines import Line2D
+
+import smtplib
+from discord_webhook import DiscordWebhook, DiscordEmbed
+from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+import random
+import string
+import sys
+import queue
+import wave
+import contextlib
+import ffmpeg
+
+import soundfile as sf
+from scipy.fft import *
+import numpy
+assert numpy
+
+from flask import Flask, request, jsonify, send_from_directory, redirect, url_for, make_response, session
+import hashlib, secrets, logging
 
 CapCatToSameOrg = { "Met": "WXR", "Admin": "EAS", "Other": "CIV", }
 SameOrgToCapCat = { "WXR":"Met", "EAS":"Admin", "CIV":"Other" }
@@ -1256,15 +1246,8 @@ class Webserver:
                     response.set_cookie(self.SESSION_COOKIE_NAME, session_id, httponly=True)
                     return response
                 else: return jsonify(message='Incorrect password.'), 403
-                
-            response = make_response(open('login.html').read())
-            response.status_code = 401
-            return response # Render login page if GET request
-        
-        @self.QEWEB_flaskapp.route('/authenticated', methods=['GET'])
-        def authenticated():
-            response = make_response('', 200)
-            return response # This returns 200, but won't if logged out, because this isn't a public path
+            
+            return make_response(open('login.html').read()) # Render login page if GET request
 
         @self.QEWEB_flaskapp.route('/upload_config', methods=['POST'])
         def upload_config():
@@ -1795,13 +1778,10 @@ class AIOMG:
         if Fallback is True or InfoXML is None: shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
         else:
             try:
-                if "matplotlib" in sys.modules:
-                    print("[AIOMG]: Generating image...")
-                    if self.GrabImage(InfoXML) is True: pass
-                    else: self.GenerateMapImage(InfoXML, InputColor)
-                    print("[AIOMG]: Image generation finished")
-                else:
-                    raise("[AIOMG]: Plotting is enabled, but libraries not imported. Please restart QuantumENDEC!")
+                print("[AIOMG]: Generating image...")
+                if self.GrabImage(InfoXML) is True: pass
+                else: self.GenerateMapImage(InfoXML, InputColor)  
+                print("[AIOMG]: Image generation finished")
             except Exception as e:
                 print("[AIOMG]: Image generation failure: ", e)
                 shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
@@ -2174,11 +2154,11 @@ class Logger:
 
         print("[Logger]: Finished logging.")
 
-        #awesome
-
 def RelayLoop():
     while QEinterrupt() is False:
         Clear()
+        with open(Config_File, "r") as JCfile: config = JCfile.read()
+        ConfigData = json.loads(config)
         
         print(f"[RELAY]: Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         UpdateStatus("Relay", f"Waiting for alert...")
