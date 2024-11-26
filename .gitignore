@@ -1,0 +1,15 @@
+/.vs
+/env
+
+/history
+/queue
+/assets/tmp
+/assets/stats
+/assets/alertlog.txt
+/assets/AlertText.json
+/assets/audio.wav
+/assets/same.wav
+/assets/eom.wav
+
+/config.json
+/relay.xml

@@ -1,5 +1,5 @@
 # This is QuantumENDEC, devloped by ApatheticDELL alongside Aaron and BunnyTub
-QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.5"
+QuantumENDEC_Version = "QuantumENDEC v5 source"
 
 XMLhistory_Folder = "./history" 
 XMLqueue_Folder = "./queue"
@@ -43,11 +43,16 @@ from pydub import AudioSegment
 from EASGen import EASGen
 from EAS2Text import EAS2Text
 
-import matplotlib
-import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
-from matplotlib.patches import Polygon
-from matplotlib.lines import Line2D
+try:
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.basemap import Basemap
+    from matplotlib.patches import Polygon
+    from matplotlib.lines import Line2D
+    MapGenAvil = True
+except Exception as e:
+    print("Alert map generation will not be available due to an import error: ", e)
+    MapGenAvil = False
 
 import smtplib
 from discord_webhook import DiscordWebhook, DiscordEmbed
@@ -1778,9 +1783,13 @@ class AIOMG:
         if Fallback is True or InfoXML is None: shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
         else:
             try:
+                global MapGenAvil
                 print("[AIOMG]: Generating image...")
                 if self.GrabImage(InfoXML) is True: pass
-                else: self.GenerateMapImage(InfoXML, InputColor)  
+                elif MapGenAvil is True: self.GenerateMapImage(InfoXML, InputColor)
+                else:
+                    print("[AIOMG]: Alert map generation is not available.")
+                    shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
                 print("[AIOMG]: Image generation finished")
             except Exception as e:
                 print("[AIOMG]: Image generation failure: ", e)
