@@ -31,6 +31,7 @@ You will also require the following software...
 ...to be installed
 
 All the required Python modules are in the 'requirements.txt' text file.
+If you are using Python 3.13+, you may need to use the 'requirements313.txt' text file.
 If running on Windows: You may also need pythoncom
 
 If you are using any of the SAME monitor functions with QuantumENDEC on linux: You need to install multimon-ng.
