@@ -1,4 +1,4 @@
-# This is QuantumENDEC, devloped by ApatheticDELL alongside Aaron and BunnyTub
+# This is QuantumENDEC, developed by ApatheticDELL alongside Aaron and BunnyTub
 QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.6"
 
 XMLhistory_Folder = "./history" 
@@ -45,14 +45,20 @@ try:
     from pydub import AudioSegment
     from EASGen import EASGen
     from EAS2Text import EAS2Text
-    with open(Config_File, "r") as JCfile: config = JCfile.read()
-    ConfigData = json.loads(config)
-    if ConfigData["ProduceImages"]:
-        import matplotlib
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.basemap import Basemap
-        from matplotlib.patches import Polygon
-        from matplotlib.lines import Line2D
+    try:
+        with open(Config_File, "r") as JCfile: config = JCfile.read()
+        ConfigData = json.loads(config)
+        try:
+            if ConfigData.get("ProduceImages", False):
+                import matplotlib
+                import matplotlib.pyplot as plt
+                from mpl_toolkits.basemap import Basemap
+                from matplotlib.patches import Polygon
+                from matplotlib.lines import Line2D
+        except (TypeError, AttributeError):
+            print("Could not check ProduceImages value. Your configuration file may be for an older QuantumENDEC version!\r\nMatplotlib won't be imported.")
+    except FileNotFoundError as e:
+        print("Configuration file not found. Matplotlib won't be imported.")
     import smtplib
     from discord_webhook import DiscordWebhook, DiscordEmbed
     from datetime import datetime
@@ -75,7 +81,7 @@ except ImportError as e:
     if nonimported_module:
         print(f"Couldn't import the {nonimported_module.group(1)} module. Please check that you have it installed!")
     else:
-        print(f"Something went wrong. Please check that your Python installation is not corrupted!")
+        print(f"Something went wrong. Please check that all modules listed in \"requirements.txt\" are installed!")
     sys.exit()
 except Exception as e:
         print(f"Something went wrong. {e}")
