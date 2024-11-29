@@ -374,25 +374,9 @@ def Setup():
     if os.path.isfile(f"./{Assets_Folder}/GeoToCLC.csv") is True: pass
     else: print("The GeoToCLC CSV file is missing, you don't have to worry about this if you're not using Canada's CAP and relaying in S.A.M.E. If you are using Canada's CAP and relaying in S.A.M.E, all CAP-CP alerts will have a 000000 location (FIPS/CLC) code.")
 
-
-# IdleInfo: Represents a non-busy status.
-# OngoingInfo: Represents a busy status.
-# Warning: Represents a warning status.
-# Error: Represents a failure status.
-# Unstarted: Represents an unstarted thread status.
-# Unknown: Represents an unknown status.
-def UpdateStatus(service, content, status_type="Unknown"):
-    # try:
-    #     with open(f"{Assets_Folder}/stats/{service}_status.txt", "w") as f: f.write(content)
-    # except: pass
+def UpdateStatus(service, content):
     try:
-        status_data = {
-            "status_type": status_type,
-            "content": content
-        }
-        
-        with open(f"{Assets_Folder}/stats/{service}_status.json", "w") as f:
-            json.dump(status_data, f)
+        with open(f"{Assets_Folder}/stats/{service}_status.txt", "w") as f: f.write(content)
     except: pass
 
 def DeconstructSAME(SAMEheader):
@@ -1262,7 +1246,7 @@ class Webserver:
 
         @self.QEWEB_flaskapp.before_request
         def require_login():
-            public_paths = ['/favicon.ico', '/login', '/login.html', '/scroll.html', '/alertText', '/fullscreen.html', '/Jstyle.html', '/tmp/alertImage.png', '/fullscreenWimage.html']
+            public_paths = ['/login', '/login.html', '/scroll.html', '/alertText', '/fullscreen.html', '/Jstyle.html', '/tmp/alertImage.png', '/fullscreenWimage.html']
             if request.path not in public_paths:
                 if not self.is_authenticated(): return redirect(url_for('login'))
 
@@ -1384,29 +1368,8 @@ class Webserver:
             return response
 
         @self.QEWEB_flaskapp.route('/<path:path>')
-        def static_files(path):
-            try:
-                return send_from_directory(Assets_Folder, path)
-            except:
-                return Response(status=404)
-            
-        # from flask import jsonify
+        def static_files(path): return send_from_directory(Assets_Folder, path)
 
-        # @self.QEWEB_flaskapp.route('/stats/<path:path>')
-        # def stats(path):
-        #     try:
-        #         return send_from_directory(Assets_Folder, path)
-        #     except Exception as e:
-        #         status_data = {
-        #             "status_type": "Error",
-        #             "content": str(e)
-        #         }
-        #         return Response(
-        #             jsonify(status_data), 
-        #             content_type='application/json', 
-        #             status = 404
-        #         )
-        
     def StartServer(self, HOST="0.0.0.0", PORT="8050"):
         print("[Webserver]: Starting webserver... ", f"Port: {PORT}")
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
@@ -1428,7 +1391,7 @@ class Capture:
                 try:
                     s.connect((host, int(port)))
                     s.settimeout(100)
-                    if StatName is not None: UpdateStatus(StatName, f"Connected to {host}.", "IdleInfo")
+                    if StatName is not None: UpdateStatus(StatName, f"Connected to {host}")
                     print(f"[TCP Capture]: Connected to {host}")
                     data_received = ""
                     try:
@@ -1441,10 +1404,10 @@ class Capture:
                                 data_received = ""
                     except socket.timeout:
                         print(f"[TCP Capture]: Connection timed out for {host}")
-                        if StatName is not None: UpdateStatus(StatName, f"Timed out from {host}.", "Error")
+                        if StatName is not None: UpdateStatus(StatName, f"Timed out: {host}")
                 except Exception as e:
                     print(f"[TCP Capture]: Something broke when connecting to {host}: {e}")
-                    if StatName is not None: UpdateStatus(StatName, f"Connection failure on {host}.", "Error")
+                    if StatName is not None: UpdateStatus(StatName, f"Connection error to: {host}")
         exit()
 
     def TCPcapture(self, host, port, buffer=1024, delimiter="</alert>", StatName=None):
@@ -1457,12 +1420,12 @@ class Capture:
 
 
     def HTTPcapture(self, CAP_URL, instance=None):
-        if CAP_URL is None or CAP_URL == "": UpdateStatus(f"HTTPCAPcapture{instance}", f"HTTP CAP capture {instance} is disabled.", "Unstarted")
+        if CAP_URL is None or CAP_URL == "": UpdateStatus(f"HTTPCAPcapture{instance}", f"HTTP CAP capture {instance} disabled.")
         else:
             print(f"[HTTP Capture]: HTTP CAP Capture active! {CAP_URL}")
             while QEinterrupt() is False:
                 try:
-                    UpdateStatus(f"HTTPCAPcapture{instance}", f"HTTP CAP Capture {instance} is active.", "IdleInfo")
+                    UpdateStatus(f"HTTPCAPcapture{instance}", f"HTTP CAP Capture {instance} is active!")
                     ReqCAP = Request(url = f'{CAP_URL}')
                     CAP = urlopen(ReqCAP).read()
                     CAP = CAP.decode('utf-8')
@@ -1474,7 +1437,7 @@ class Capture:
                     time.sleep(30)
                 except Exception as e:
                     print("[HTTP Capture] Something went wrong.", e)
-                    UpdateStatus(f"HTTPCAPcapture{instance}", f"HTTP CAP Capture {instance} failure.", "Error")
+                    UpdateStatus(f"HTTPCAPcapture{instance}", f"HTTP CAP Capture {instance} error.")
                     time.sleep(30)
 
     def NWScapture(self, ATOM_LINK):
@@ -1482,7 +1445,7 @@ class Capture:
         # Why can't you use a centerlized TCP server?!!?!
         print("[NWS CAP Capture]: Activating NWS CAP Capture with: ", ATOM_LINK)
         while QEinterrupt() is False:
-            UpdateStatus("NWSCAPcapture", "NWS CAP Capture is active.", "IdleInfo")
+            UpdateStatus("NWSCAPcapture", "NWS CAP Capture is active.")
             try:
                 req1 = Request(url = ATOM_LINK)
                 xml = urlopen(req1).read()
@@ -1513,8 +1476,8 @@ class Capture:
                                 with open(f"{XMLqueue_Folder}/{filename}", "w") as f: f.write(NWSCAP_XML)
                     except: pass
             except Exception as e:
-                print("[NWS CAP Capture]: NWS CAP failure.", e)
-                UpdateStatus("NWSCAPcapture", "NWS CAP failure.", "Error")
+                print("[NWS CAP Capture]: An error occured.", e)
+                UpdateStatus("NWSCAPcapture", "An error occured.")
             time.sleep(120) # To put less strain on the network
 
 class Monitor_Stream:
@@ -1545,7 +1508,7 @@ class Monitor_Stream:
                 print(f"[{self.monitorName}] Stopped Recording Thread")
                 RemoveEOMpATTN(output_file)
                 CreateSAMEmonitorXML(ZCZC, output_file, self.monitorName)
-                UpdateStatus(self.monitorName, f"Alert sent.", "IdleInfo")
+                UpdateStatus(self.monitorName, f"Alert sent.")
                 print(f"[{self.monitorName}]  Alert Sent!\n\n")
                 exit()
             time.sleep(1)
@@ -1567,8 +1530,8 @@ class Monitor_Stream:
             self.ffmpeg_process = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE)
             if platform == "win": self.source_process = subprocess.Popen(['multimon-ng-WIN32/multimon-ng.exe', '-a', 'EAS', '-q', '-t', 'raw', '-'], stdin=self.ffmpeg_process.stdout, stdout=subprocess.PIPE)
             else: self.source_process = subprocess.Popen(['multimon-ng', '-a', 'EAS', '-q', '-t', 'raw', '-'], stdin=self.ffmpeg_process.stdout, stdout=subprocess.PIPE)
-            UpdateStatus(self.monitorName, f"Listening for alerts on {self.streamURL}.", "IdleInfo")
-            print(f"[{self.monitorName}] Listening for alerts on {self.streamURL}.\n")
+            UpdateStatus(self.monitorName, f"Ready For Alerts, listening to {self.streamURL}")
+            print(f"[{self.monitorName}]  Ready For Alerts, listening to {self.streamURL}\n")
 
             while QEinterrupt() is False:
                 line = self.source_process.stdout.readline().decode("utf-8")
@@ -1579,7 +1542,7 @@ class Monitor_Stream:
                 if 'ZCZC-' in str(line):
                     if ZCZC_test(decode) == True:
                         SAME = decode.replace("\n", "")
-                        UpdateStatus(self.monitorName, f"Receiving alert.", "OngoingInfo")
+                        UpdateStatus(self.monitorName, f"Receiving alert...")
                         print(f"[{self.monitorName}] ZCZC Check OK")
                         with open(Config_File, "r") as JCfile: config = JCfile.read()
                         ConfigData = json.loads(config)
@@ -1598,21 +1561,21 @@ class Monitor_Stream:
                         self.record = False
                         try: RecordThread.join()
                         except: pass
-                        UpdateStatus(self.monitorName, f"Listening for alerts on {self.streamURL}.", "IdleInfo")
+                        UpdateStatus(self.monitorName, f"Ready For Alerts, listening to {self.streamURL}")
                 last = line
         except:
             try:
                 self.ffmpeg_process.terminate()
                 self.source_process.terminate()
             except: pass
-            UpdateStatus(self.monitorName, f"Monitor failure.", "Error")
+            UpdateStatus(self.monitorName, f"Failure")
             print(f"[{self.monitorName}] Monitor failure.")
 
     def start(self):
         while QEinterrupt() is False:
             if self.is_stream_online() is False:
                 print(f"[{self.monitorName}] Stream URL {self.streamURL} is offline or unreachable.")
-                UpdateStatus(self.monitorName, f"{self.streamURL} could not be reached.", "Error")
+                UpdateStatus(self.monitorName, f"Stream URL {self.streamURL} is offline or unreachable.")
                 time.sleep(30)
             else:
                 try:
@@ -1623,7 +1586,7 @@ class Monitor_Stream:
                         time.sleep(30)
                         if self.is_stream_online() is False:
                             print(f"[{self.monitorName}] Stream URL {self.streamURL} is offline or unreachable.")
-                            UpdateStatus(self.monitorName, f"{self.streamURL} could not be reached.", "Error")
+                            UpdateStatus(self.monitorName, f"Stream URL {self.streamURL} is offline or unreachable.")
                             time.sleep(30)
                             break
                         else: pass
@@ -1632,7 +1595,7 @@ class Monitor_Stream:
                         self.source_process.terminate()
                 except:
                     print(f"[{self.monitorName}] Monitor failure.")
-                    UpdateStatus(self.monitorName, f"Monitor failure.", "Error")
+                    UpdateStatus(self.monitorName, f"Failure.")
         exit()
 
 class Monitor_Local:
@@ -1665,8 +1628,8 @@ class Monitor_Local:
                             print(f"[{self.monitorName}] Stopped Recording Thread")
                             RemoveEOMpATTN(OutputFile)
                             CreateSAMEmonitorXML(SAME, OutputFile, self.monitorName)
-                            UpdateStatus(self.monitorName, f"Alert sent.", "IdleInfo")
-                            print(f"[{self.monitorName}] Alert Sent!")
+                            UpdateStatus(self.monitorName, f"Alert sent.")
+                            print(f"[{self.monitorName}]  Alert Sent!")
                             exit()
         exit()
 
@@ -1677,8 +1640,8 @@ class Monitor_Local:
                 last = None
                 if platform == "win": self.source_process = subprocess.Popen(["multimon-ng-WIN32/multimon-ng.exe", "-a", "EAS", "-q"], stdout=subprocess.PIPE)
                 else: self.source_process = subprocess.Popen(["multimon-ng", "-a", "EAS", "-q"], stdout=subprocess.PIPE)
-                UpdateStatus(self.monitorName, f"Ready for alerts.", "IdleInfo")
-                print(f"[{self.monitorName}] Ready For Alerts...\n")
+                UpdateStatus(self.monitorName, f"Ready For Alerts.")
+                print(f"[{self.monitorName}]  Ready For Alerts...\n")
 
                 while QEinterrupt() is False:
                     line = self.source_process.stdout.readline().decode("utf-8")
@@ -1689,7 +1652,7 @@ class Monitor_Local:
                     if 'ZCZC-' in str(line):
                         if ZCZC_test(decode) == True:
                             SAME = decode.replace("\n", "")
-                            UpdateStatus(self.monitorName, f"Receiving alert.", "OngoingInfo")
+                            UpdateStatus(self.monitorName, f"Receiving alert...")
                             print(f"[{self.monitorName}] ZCZC Check OK")
                             with open(Config_File, "r") as JCfile: config = JCfile.read()
                             ConfigData = json.loads(config)
@@ -1707,10 +1670,10 @@ class Monitor_Local:
                             self.record = False
                             try: RecordThread.join()
                             except: pass
-                            UpdateStatus(self.monitorName, f"Ready for alerts.", "IdleInfo")
+                            UpdateStatus(self.monitorName, f"Ready For Alerts.")
                     last = line
             except Exception as e:
-                UpdateStatus(self.monitorName, f"Monitor failure.", "Error")
+                UpdateStatus(self.monitorName, f"Failure")
                 print(f"[{self.monitorName}] Monitor failure.", e)
                 time.sleep(5)
         exit()
@@ -1725,7 +1688,7 @@ class Monitor_Local:
             exit()
         except:
             print(f"[{self.monitorName}] Monitor failure.")
-            UpdateStatus(self.monitorName, f"Monitor failure.", "Error")
+            UpdateStatus(self.monitorName, f"Failure.")
 
 class AIOMG:
     # A.I.O.M.G: Alert Image Or Map Generator
@@ -2224,14 +2187,14 @@ def RelayLoop():
         Clear()
         
         print(f"[RELAY]: Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        UpdateStatus("Relay", f"Waiting for alerts.", "IdleInfo")
+        UpdateStatus("Relay", f"Waiting for alert...")
         ResultFileName = WatchNotify(XMLqueue_Folder, XMLhistory_Folder)
         if QEinterrupt() is True: exit()
 
         print(f"[RELAY]: Captured: {ResultFileName}")
         shutil.move(f"{XMLqueue_Folder}/{ResultFileName}", f"./relay.xml")
         with open("./relay.xml", "r", encoding='utf-8') as file: RelayXML = file.read()
-        UpdateStatus("Relay", f"Processing alert.", "OngoingInfo")
+        UpdateStatus("Relay", f"Processing alert...")
         
         if "<sender>NAADS-Heartbeat</sender>" in RelayXML:
             print("[RELAY]: NAADS HEARTBEAT DETECTED")
@@ -2261,7 +2224,7 @@ def RelayLoop():
                         Gen.GenerateAudioVisualContent(BroadcastContent, f"#{AlertColor}")
                         Logger(ConfigData).SendLog(BroadcastContent['HEADLINE'], BroadcastContent['TEXT'], BroadcastContent['SAME'], "TX", AlertColor)
                         UpdateCGEN(AlertColor, BroadcastContent['HEADLINE'], BroadcastContent['TEXT'], True)
-                        UpdateStatus("Relay", f"Transmitting alert.", "OngoingInfo")
+                        UpdateStatus("Relay", f"Transmitting alert...")
                         Plugins_Run("beforeRelay", BroadcastContent['SAME'], BroadcastContent['TEXT'], InfoXML)
 
                         global PlayoutAlerts
@@ -2315,7 +2278,7 @@ if __name__ == "__main__":
     if QEARGS.noPlayout is True: PlayoutAlerts = False
     else: PlayoutAlerts = True
 
-    print(f"-- Welcome to QuantumENDEC --\n{QuantumENDEC_Version}\n\nDeveloped by ApatheticDELL alongside Aaron and BunnyTub\n")
+    print(f"-- Welcome to QuantumENDEC --\n{QuantumENDEC_Version}\n\nDevloped by ApatheticDELL alongside Aaron and BunnyTub\n")
 
     WebserverThread = None
 
@@ -2326,7 +2289,7 @@ if __name__ == "__main__":
         time.sleep(1)
         with open(Config_File, "r") as JCfile: config = JCfile.read()
         ConfigData = json.loads(config)
-        UpdateStatus("QuantumENDEC", "Starting up.", "OngoingInfo")
+        UpdateStatus("QuantumENDEC", "Starting up...")
         Plugins_Run("startup")
 
         QuantumStatus = 0
@@ -2400,7 +2363,7 @@ if __name__ == "__main__":
 
         for thread in THREADSLIST: thread.start()
         
-        UpdateStatus("QuantumENDEC", "Ready and running.", "IdleInfo")
+        UpdateStatus("QuantumENDEC", "Ready and Running")
 
         while QuantumStatus == 0:
             try: time.sleep(0.5) # keep-alive
@@ -2408,10 +2371,10 @@ if __name__ == "__main__":
 
         if QuantumStatus == 1:
             print("QuantumENDEC is restarting... (please wait)")
-            UpdateStatus("QuantumENDEC", "Restarting (please wait).", "OngoingInfo")
+            UpdateStatus("QuantumENDEC", "Restarting... (please wait)")
         elif QuantumStatus == 2:
             print("QuantumENDEC is shutting down... (please wait)")
-            UpdateStatus("QuantumENDEC", "Shutting down (please wait).", "OngoingInfo")
+            UpdateStatus("QuantumENDEC", "Shutting down... (please wait)")
 
         for thread in THREADSLIST: thread.join()
         
