@@ -263,6 +263,7 @@ def createDefaultConfig():
         "CGENcolor_advisory": "00aa00",
         "CGEN_ClearAfterAlert": False,
         "ProduceImages": False,
+        "SkipMap":False,
         "enable_discord_webhook": False,
         "webhook_author_name": "",
         "webhook_author_URL": "",
