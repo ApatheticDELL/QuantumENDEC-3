@@ -41,6 +41,9 @@ The Multimon-NG binary for windows is included with QuantumENDEC.
 Before doing anything, you need to have some knowledge of the Canadian public alerting system... more precisely, Pelmorex and its CAP-CP XML files.
 You can read about it on this PDF from Pelmorex: https://alerts.pelmorex.com/wp-content/uploads/2021/06/NAADS-LMD-User-Guide-R10.0.pdf
 
+> [!CAUTION]
+> QuantumENDEC must be run in its own separate process, and should not be attached to or run within other programs, such as embedded consoles or debuggers (e.g. Visual Studio Code). Issues with QuantumENDEC inside of such environments may be ignored and closed.
+
 Just run ```python QuantumENDEC.py``` to start QuantumENDEC and the web interface server.
 The python command may be different depending on your python installation... (it could be py, or python3)
 
