@@ -2229,12 +2229,23 @@ def RelayLoop():
         ConfigData = json.loads(config)
         
         print(f"[RELAY]: Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        UpdateStatus("Relay", f"Waiting for alert...")
-        ResultFileName = WatchNotify(XMLqueue_Folder, XMLhistory_Folder)
-        if QEinterrupt() is True: exit()
+        
+        while True:
+            UpdateStatus("Relay", f"Waiting for alert...")
+            ResultFileName = WatchNotify(XMLqueue_Folder, XMLhistory_Folder)
+            if QEinterrupt() is True: exit()
 
-        print(f"[RELAY]: Captured: {ResultFileName}")
-        shutil.move(f"{XMLqueue_Folder}/{ResultFileName}", f"./relay.xml")
+            print(f"[RELAY]: Captured: {ResultFileName}")
+            
+            try:
+                shutil.move(f"{XMLqueue_Folder}/{ResultFileName}", f"./relay.xml")
+                break
+            except Exception as e:
+                print("[RELAY]: ERROR accessing queue alert file. ", e)
+                print("[RELAY]: Re-trying in a few moments...")
+                time.sleep(3)
+        
+        
         with open("./relay.xml", "r", encoding='utf-8') as file: RelayXML = file.read()
         UpdateStatus("Relay", f"Processing alert...")
         
