@@ -19,20 +19,20 @@ ChatGPT ... chat.openai.com
 QuantumENDEC is a Canadian CAP Emergency Alerting Software. Its primary goal is to encode Canadian Emergency Alerts into S.A.M.E alerts!
 
 ### Install
-Installing the QuantumENDEC is quite easy.
+Installing QuantumENDEC's resources is an easy task.
 
 > [!CAUTION]
 > QuantumENDEC must be run on a system with one or more audio output devices. It will most likely not function in an online environment, thus, issues with QuantumENDEC inside of online environments such as github.dev may be ignored and closed.
 
-You will also require the following software...
+You require the following software...
 - [FFmpeg](https://www.ffmpeg.org/download.html#build-windows)
 - [Python](https://www.python.org/downloads/release/python-3119/) (3.11.9 or higher recommended)
-- [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
+- [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) (for map functionality, optional)
 ...to be installed
 
 All the required Python modules are in the 'requirements.txt' text file.
 If you are using Python 3.13+, you may need to use the 'requirements313.txt' text file.
-If running on Windows: You may also need pythoncom
+If running on Windows, you may also need to install pythoncom.
 
 If you are using any of the SAME monitor functions with QuantumENDEC on linux: You need to install multimon-ng.
 The Multimon-NG binary for windows is included with QuantumENDEC.
