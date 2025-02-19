@@ -1,5 +1,5 @@
-# This is QuantumENDEC, developed by ApatheticDELL alongside Aaron and BunnyTub
-QuantumENDEC_Version = "QuantumENDEC v5 Beta 10.6"
+# This is QuantumENDEC, devloped by ApatheticDELL alongside Aaron and BunnyTub
+QuantumENDEC_Version = "QuantumENDEC v5 source"
 
 XMLhistory_Folder = "./history" 
 XMLqueue_Folder = "./queue"
@@ -20,72 +20,64 @@ def QEinterrupt():
 try: import pythoncom
 except: pass
 
-ConfigData = None
+import re
+import pyttsx3
+import requests
+import shutil
+import time
+import socket
+import threading
+import json
+import os
+import argparse
+import base64
+import subprocess
+import importlib
+import signal
+
+import sounddevice as sd
+from scipy.io import wavfile
+from datetime import datetime, timezone, timedelta
+from urllib.request import Request, urlopen
+from pydub import AudioSegment
+from EASGen import EASGen
+from EAS2Text import EAS2Text
 
 try:
-    import sys
-    import os
-    import re
-    import pyttsx3
-    import requests
-    import shutil
-    import time
-    import socket
-    import threading
-    import json
-    import argparse
-    import base64
-    import subprocess
-    import importlib
-    import signal
-    import sounddevice as sd
-    from scipy.io import wavfile
-    from datetime import datetime, timezone, timedelta
-    from urllib.request import Request, urlopen
-    from pydub import AudioSegment
-    from EASGen import EASGen
-    from EAS2Text import EAS2Text
-    try:
-        with open(Config_File, "r") as JCfile: config = JCfile.read()
-        ConfigData = json.loads(config)
-        try:
-            if ConfigData.get("ProduceImages", False):
-                import matplotlib
-                import matplotlib.pyplot as plt
-                from mpl_toolkits.basemap import Basemap
-                from matplotlib.patches import Polygon
-                from matplotlib.lines import Line2D
-        except (TypeError, AttributeError):
-            print("Could not check ProduceImages value. Your configuration file may be for an older QuantumENDEC version!\r\nMatplotlib won't be imported.")
-    except FileNotFoundError as e:
-        print("Configuration file not found. Matplotlib won't be imported.")
-    import smtplib
-    from discord_webhook import DiscordWebhook, DiscordEmbed
-    from datetime import datetime
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-    import random
-    import string
-    import queue
-    import wave
-    import contextlib
-    import ffmpeg
-    import soundfile as sf
-    from scipy.fft import *
-    import numpy
-    assert numpy
-    from flask import Flask, Response, request, jsonify, send_from_directory, redirect, url_for, make_response, session
-    import hashlib, secrets, logging
-except ImportError as e:
-    nonimported_module = re.search(r"No module named '(.+)'", str(e))
-    if nonimported_module:
-        print(f"Couldn't import the {nonimported_module.group(1)} module. Please check that you have it installed!")
-    else:
-        print(f"Something went wrong. Please check that all modules listed in \"requirements.txt\" are installed!")
-    sys.exit()
+    import matplotlib
+    import matplotlib.pyplot as plt
+    #from mpl_toolkits.basemap import Basemap
+    from matplotlib.patches import Polygon
+    from matplotlib.lines import Line2D
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+    import cartopy.io.shapereader as shpreader
+    MapGenAvil = True
 except Exception as e:
-        print(f"Something went wrong. {e}")
-        sys.exit()
+    print("Alert map generation will not be available due to an import error: ", e)
+    MapGenAvil = False
+
+import smtplib
+from discord_webhook import DiscordWebhook, DiscordEmbed
+from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+import random
+import string
+import sys
+import queue
+import wave
+import contextlib
+import ffmpeg
+
+import soundfile as sf
+from scipy.fft import *
+import numpy
+assert numpy
+
+from flask import Flask, request, jsonify, send_from_directory, redirect, url_for, make_response, session
+import hashlib, secrets, logging
 
 CapCatToSameOrg = { "Met": "WXR", "Admin": "EAS", "Other": "CIV", }
 SameOrgToCapCat = { "WXR":"Met", "EAS":"Admin", "CIV":"Other" }
@@ -271,6 +263,7 @@ def createDefaultConfig():
         "CGENcolor_advisory": "00aa00",
         "CGEN_ClearAfterAlert": False,
         "ProduceImages": False,
+        "SkipMap":False,
         "enable_discord_webhook": False,
         "webhook_author_name": "",
         "webhook_author_URL": "",
@@ -536,10 +529,11 @@ def FilterCheck_CAP(InputConfig, AlertInfo):
         Language = re.search(r'<language>\s*(.*?)\s*</language>', AlertInfo, re.MULTILINE | re.IGNORECASE | re.DOTALL).group(1)
         Language = Language.lower()
         if "fr-ca" in Language: Language = "fr"
-        else: Language = "en"
+        elif "en-ca" in Language or "en-us" in Language: Language = "en"
+        else: Language = "NOT_SUPPORTED"
         Language_Result = ConfigData[f"relay_{Language}"]
-    except: 
-        Language_Result = True
+    except:
+        Language_Result = False
 
     print("<< Filter Check (CAP) >>")
     print("Severity: ", InputConfig[f"severity{Severity}"])
@@ -686,6 +680,7 @@ def GenerateTTS(Output, InputConfig=None, InputText=None, Language="EN"):
     except: pass
     try: pythoncom.CoInitialize()
     except: pass
+
     if InputConfig["TTS_Service"] == "pyttsx3":
         engine = pyttsx3.init()
         if InputConfig["UseDefaultVoices"] is False:
@@ -696,12 +691,16 @@ def GenerateTTS(Output, InputConfig=None, InputText=None, Language="EN"):
             if ActiveVoice: engine.setProperty('voice', ActiveVoice.id)
         engine.save_to_file(str(InputText), Output)
         engine.runAndWait()
+
+    # i don't like the execution of this... maybe let the end user just setup a custom TTS in plugins!
     elif InputConfig["TTS_Service"] == "flite":
         InputText = InputText.replace("\n", " ")
+        
         if InputConfig["UseDefaultVoices"] is False:
             if Language == "FR": ActiveVoice = InputConfig["FliteVoice_FR"]
             else: ActiveVoice = InputConfig["FliteVoice_EN"]
             subprocess.run(["flite", "-t", InputText, "-voice", ActiveVoice, "-o", Output], capture_output=True, text=True)
+        
         else: subprocess.run(["flite", "-t", InputText, "-o", Output], capture_output=True, text=True)
 
 def EventSuffix(EventIn):
@@ -1695,14 +1694,12 @@ class AIOMG:
     def __init__(self) -> None:
         self.ImageOutput = f"{Tmp_Folder}/alertImage.png"
 
-    def overlay_polygon(self, map_object, lats, lons, label='', color='red'):
-        x, y = map_object(lons, lats)
-        map_object.plot(x, y, marker=None, color=color, linewidth=2, linestyle='-', label=label)
+    def overlay_polygon(self, ax, lats, lons, label='', color='red'):
+        ax.plot(lons, lats, color=color, linewidth=2, linestyle='-', label=label, transform=ccrs.PlateCarree())
 
-    def fill_polygon(self, map_object, lats, lons, color='red', alpha=0.5):
-        x, y = map_object(lons, lats)
-        polygon = Polygon(list(zip(x, y)), facecolor=color, alpha=alpha)
-        map_object.ax.add_patch(polygon)
+    def fill_polygon(self, ax, lats, lons, color='red', alpha=0.5):
+        polygon = Polygon(list(zip(lons, lats)), facecolor=color, alpha=alpha, transform=ccrs.PlateCarree())
+        ax.add_patch(polygon)
 
     def calculate_bounding_box(self, coordinates):
         min_lat = min(lat for lat, _ in coordinates)
@@ -1718,48 +1715,98 @@ class AIOMG:
         for char in PolyColor:
             if 'G' <= char <= 'Z' or 'g' <= char <= 'z': PolyColor = "#FF0000"
 
-        try: HEADLINE = re.search(r'<headline>\s*(.*?)\s*</headline>', InfoXML, re.MULTILINE | re.IGNORECASE | re.DOTALL).group(1) # Get alert title
-        except: HEADLINE = "Alert region"
-        AllCoords = re.findall(r'<polygon>\s*(.*?)\s*</polygon>', InfoXML, re.MULTILINE | re.IGNORECASE | re.DOTALL) # Get all polygons
+        try:
+            HEADLINE = re.search(r'<headline>\s*(.*?)\s*</headline>', InfoXML, re.MULTILINE | re.IGNORECASE | re.DOTALL).group(1)  # Get alert title
+        except:
+            HEADLINE = "Alert region"
+        
+        AllCoords = re.findall(r'<polygon>\s*(.*?)\s*</polygon>', InfoXML, re.MULTILINE | re.IGNORECASE | re.DOTALL)  # Get all polygons
         
         # Generate map
         coordinates_string = ""
         for i in AllCoords:
-            coordinates_string = coordinates_string + f" {i}"
+            coordinates_string += f" {i}"
         polygon_coordinates = [list(map(float, item.split(','))) for item in coordinates_string.split()]
         min_lat, max_lat, min_lon, max_lon = self.calculate_bounding_box(polygon_coordinates)
+
         lat_center = (min_lat + max_lat) / 2
         lon_center = (min_lon + max_lon) / 2
         lat_range = max_lat - min_lat
         lon_range = max_lon - min_lon
 
-        if lat_range > lon_range: lon_range = lat_range
-        else: lat_range = lon_range
+        if lat_range > lon_range:
+            lon_range = lat_range
+        else:
+            lat_range = lon_range
 
         fig = plt.figure(figsize=(10, 10))
-        # For outlined polygon
-        #world_map = Basemap(projection='mill', lat_1=-60, lat_2=90, lon_0=lon_center, llcrnrlat=lat_center - 1.1 * lat_range, urcrnrlat=lat_center + 1.1 * lat_range, llcrnrlon=lon_center - 1.1 * lon_range, urcrnrlon=lon_center + 1.1 * lon_range, resolution='i')
-        ax = fig.add_subplot(111)
-        #world_map = Basemap(ax=ax, projection='mill', lat_1=-60, lat_2=90, lon_0=lon_center, llcrnrlat=lat_center - 1.1 * lat_range, urcrnrlat=lat_center + 1.1 * lat_range, llcrnrlon=lon_center - 1.1 * lon_range, urcrnrlon=lon_center + 1.1 * lon_range, resolution='i')
-        world_map = Basemap( ax=ax, projection='cyl', lon_0=lon_center, llcrnrlat=lat_center - 1.1 * lat_range, urcrnrlat=lat_center + 1.1 * lat_range, llcrnrlon=lon_center - 1.1 * lon_range, urcrnrlon=lon_center + 1.1 * lon_range, resolution='i' )
-        world_map.drawcoastlines()
-        world_map.drawcountries()
-        world_map.drawcounties()
-        world_map.drawstates()
-        world_map.fillcontinents(color='#00AA44', lake_color='#002255')
-        world_map.drawmapboundary(fill_color='#002255')
+        ax = fig.add_subplot(111, projection=ccrs.PlateCarree())
 
+        # Set map extent
+        ax.set_extent([
+            lon_center - 1.1 * lon_range, lon_center + 1.1 * lon_range,
+            lat_center - 1.1 * lat_range, lat_center + 1.1 * lat_range
+        ])
+
+        # Add map features
+        if os.path.exists("./map_addons/counties/ne_10m_admin_2_counties.shp"):
+            print("counties shapefile detected") # add county lines
+            countines = cfeature.ShapelyFeature(
+                shpreader.Reader("./map_addons/counties/ne_10m_admin_2_counties.shp").geometries(),
+                ccrs.PlateCarree(),
+                facecolor='none', edgecolor='grey' )
+            ax.add_feature(countines, linestyle="--")
+
+        if os.path.exists("./map_addons/roads/ne_10m_roads.shp"):
+            print("roads shapefile detected") # add roads
+            roads = cfeature.ShapelyFeature(
+                shpreader.Reader("./map_addons/roads/ne_10m_roads.shp").geometries(),
+                ccrs.PlateCarree(),
+                facecolor='none', edgecolor='white' )
+            ax.add_feature(roads)
+
+        ax.add_feature(cfeature.LAND, facecolor='#00AA44')
+        ax.add_feature(cfeature.OCEAN, facecolor='#002255')
+        ax.add_feature(cfeature.LAKES, facecolor='#002255')
+        ax.add_feature(cfeature.COASTLINE)
+        ax.add_feature(cfeature.STATES, linestyle='-')
+        ax.add_feature(cfeature.BORDERS, linestyle='-')
+        
+
+        # Draw polygons
         for i in AllCoords:
             i = [list(map(float, item.split(','))) for item in i.split()]
             lats, lons = zip(*i)
-            self.fill_polygon(world_map, lats, lons, color=PolyColor, alpha=0.5)
-            self.overlay_polygon(world_map, lats, lons, label=HEADLINE, color=PolyColor) # For outlined polygon
-        
-        ax.set_aspect('equal')
+            self.fill_polygon(ax, lats, lons, color=PolyColor, alpha=0.6)
+            self.overlay_polygon(ax, lats, lons, label=HEADLINE, color=PolyColor)  # For outlined polygon
+
+        if os.path.exists("./map_addons/populations/ne_10m_populated_places.shp"):
+            print("population shapefiles detected")
+            label_field = "NAME"
+            color = "black"
+            reader = shpreader.Reader("./map_addons/populations/ne_10m_populated_places.shp")
+            
+            # Function to check if a point is within the bounding box
+            def is_within_bbox(x, y, bbox):
+                min_lon, max_lon, min_lat, max_lat = bbox
+                return min_lon <= x <= max_lon and min_lat <= y <= max_lat
+
+            for record in reader.records():
+                geometry = record.geometry
+                if geometry.geom_type == "Point":
+                    # Check if the point is within the bounding box
+                    if is_within_bbox(geometry.x, geometry.y, (min_lon, max_lon, min_lat, max_lat)):
+                        # Plot the point
+                        ax.plot(geometry.x, geometry.y, 'o', color=color, transform=ccrs.PlateCarree())
+                        
+                        # Add label (if available)
+                        label = record.attributes.get(label_field, "Unknown")
+                        ax.text((geometry.x + 0.05), (geometry.y + 0.05), label, fontsize=8, color=color, transform=ccrs.PlateCarree())
+
+        ax.set_aspect('auto')
         legend_patch = Line2D([0], [0], marker='o', color='w', markerfacecolor=PolyColor, markersize=10, label=HEADLINE)
         plt.legend(handles=[legend_patch], loc='upper right')
-        #plt.legend(loc='upper right') # For outlined polygon
-        #plt.show() #For testing, to show the map in a window
+
         fig.savefig(self.ImageOutput, bbox_inches='tight', pad_inches=0.0, dpi=70)
 
     def ConvertImageFormat(self, inputAudio, outputAudio):
@@ -1797,17 +1844,18 @@ class AIOMG:
             else: return False
         except: return False
 
-    def OutputAlertImage(self, InfoXML=None, InputColor="#FF0000", Fallback=False):
+    def OutputAlertImage(self, InfoXML=None, InputColor="#FF0000", Fallback=False, SkipMap=False):
         if Fallback is True or InfoXML is None: shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
         else:
             try:
-                if "matplotlib" in sys.modules:
-                    print("[AIOMG]: Generating image...")
-                    if self.GrabImage(InfoXML) is True: pass
-                    else: self.GenerateMapImage(InfoXML, InputColor)
-                    print("[AIOMG]: Image generation finished")
+                global MapGenAvil
+                print("[AIOMG]: Generating image...")
+                if self.GrabImage(InfoXML) is True: pass
+                elif MapGenAvil is True or SkipMap is True: self.GenerateMapImage(InfoXML, InputColor)
                 else:
-                    raise("[AIOMG]: Plotting is enabled, but libraries not imported. Please restart QuantumENDEC!")
+                    print("[AIOMG]: Alert map generation is not available or is set to skip.")
+                    shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
+                print("[AIOMG]: Image generation finished")
             except Exception as e:
                 print("[AIOMG]: Image generation failure: ", e)
                 shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
@@ -1821,7 +1869,7 @@ class Generate:
         Language = re.search(r'<language>\s*(.*?)\s*</language>', self.AlertInfo, re.MULTILINE | re.IGNORECASE | re.DOTALL).group(1)
         if "en-ca" in Language or "en-us" in Language or "en" in Language: self.Language = "EN"
         elif "fr-ca" in Language or "fr" in Language: self.Language = "FR"
-        else: self.Language = "EN"
+        else: self.Language = "NOT_SUPPORTED"
 
     def BroadcastText(self):
         try: BroadcastText = re.search(r'<valueName>layer:SOREM:1.0:Broadcast_Text</valueName>\s*<value>\s*(.*?)\s*</value>', self.AlertInfo, re.MULTILINE | re.IGNORECASE | re.DOTALL).group(1).replace('\n',' ').replace('  ',' ')
@@ -1996,7 +2044,7 @@ class Generate:
             try: TrimAudio(f"{Assets_Folder}/audio.wav")
             except: print("[GENERATE]: Failed to trim broadcast audio.")
         
-        if self.Config["ProduceImages"] is True: AIOMG().OutputAlertImage(self.AlertInfo, AlertColor)
+        if self.Config["ProduceImages"] is True: AIOMG().OutputAlertImage(self.AlertInfo, AlertColor, self.Config["SkipMap"])
 
 class Playout:
     def __init__(self, ConfigData, AlertRegion=None):
@@ -2187,12 +2235,23 @@ def RelayLoop():
         Clear()
         
         print(f"[RELAY]: Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        UpdateStatus("Relay", f"Waiting for alert...")
-        ResultFileName = WatchNotify(XMLqueue_Folder, XMLhistory_Folder)
-        if QEinterrupt() is True: exit()
+        
+        while True:
+            UpdateStatus("Relay", f"Waiting for alert...")
+            ResultFileName = WatchNotify(XMLqueue_Folder, XMLhistory_Folder)
+            if QEinterrupt() is True: exit()
 
-        print(f"[RELAY]: Captured: {ResultFileName}")
-        shutil.move(f"{XMLqueue_Folder}/{ResultFileName}", f"./relay.xml")
+            print(f"[RELAY]: Captured: {ResultFileName}")
+            
+            try:
+                shutil.move(f"{XMLqueue_Folder}/{ResultFileName}", f"./relay.xml")
+                break
+            except Exception as e:
+                print("[RELAY]: ERROR accessing queue alert file. ", e)
+                print("[RELAY]: Re-trying in a few moments...")
+                time.sleep(3)
+        
+        
         with open("./relay.xml", "r", encoding='utf-8') as file: RelayXML = file.read()
         UpdateStatus("Relay", f"Processing alert...")
         

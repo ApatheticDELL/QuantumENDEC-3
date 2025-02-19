@@ -1,5 +1,5 @@
 ApatheticDELL presents...
-# QuantumENDEC v5 Beta 10.5
+# QuantumENDEC v5
 
 ### Credits
 Developed by...
@@ -22,7 +22,7 @@ QuantumENDEC is a Canadian CAP Emergency Alerting Software. Its primary goal is 
 Installing the QuantumENDEC is quite easy.
 
 > [!CAUTION]
-> QuantumENDEC must be run on a system with one or more audio output devices. It will most likely not function in an online environment, thus, issues with QuantumENDEC inside of online environments such as github.dev may be ignored.
+> QuantumENDEC must be run on a system with one or more audio output devices. It will most likely not function in an online environment, thus, issues with QuantumENDEC inside of online environments such as github.dev may be ignored and closed.
 
 You will also require the following software...
 - [FFmpeg](https://www.ffmpeg.org/download.html#build-windows)
@@ -31,6 +31,7 @@ You will also require the following software...
 ...to be installed
 
 All the required Python modules are in the 'requirements.txt' text file.
+If you are using Python 3.13+, you may need to use the 'requirements313.txt' text file.
 If running on Windows: You may also need pythoncom
 
 If you are using any of the SAME monitor functions with QuantumENDEC on linux: You need to install multimon-ng.
@@ -39,6 +40,9 @@ The Multimon-NG binary for windows is included with QuantumENDEC.
 ### Setup
 Before doing anything, you need to have some knowledge of the Canadian public alerting system... more precisely, Pelmorex and its CAP-CP XML files.
 You can read about it on this PDF from Pelmorex: https://alerts.pelmorex.com/wp-content/uploads/2021/06/NAADS-LMD-User-Guide-R10.0.pdf
+
+> [!CAUTION]
+> QuantumENDEC must be run in its own separate process, and should not be attached to or run within other programs, such as embedded consoles or debuggers (e.g. Visual Studio Code). Issues with QuantumENDEC inside of such environments may be ignored and closed.
 
 Just run ```python QuantumENDEC.py``` to start QuantumENDEC and the web interface server.
 The python command may be different depending on your python installation... (it could be py, or python3)
@@ -84,9 +88,6 @@ In the audio folder, the attention tones are static! Try not to remove/change it
 You can add pre.wav and/or post.wav in the Audio folder. (Or do it in the web interface (Home tab, there is the button to manage lead in/out audio))
 
 Everything should work on its own!
-
-### Some Extra Additional Information
-~~This software ENDEC will NOT work with American CAP alerts, since it's designed for the CAP Canadian Profile. Also, the way it grabs alerts is different from FEMA CAP, in Canada, there is one centralized internet TCP feed that ENDECs across Canada connect to. The system is designed by Pelmorex.~~ ... About that...
 
 If you see anything about matches or match files, it just means that the software already processed the thing/file in question.
 

@@ -76,8 +76,10 @@
             <label for="CGENcolor_advisory">Selected value: </label><input type="text" id="CGENcolor_advisory" name="CGENcolor_advisory" readonly>
             <br /><br />
             <input type="checkbox" id="CGEN_ClearAfterAlert" name="CGEN_ClearAfterAlert"><label for="CGEN_ClearAfterAlert"> Clear CGEN after alert (This will get rid of the alert text after an alert has been transmitted on both fullscreen and scroll)</label><br /><br />
-            <input type="checkbox" id="ProduceImages" name="ProduceImages"><label for="ProduceImages"> Produce Images (Grab images or generate a alert map image. They will be sent over discord and shown on HTML CGENs with image capabilities)</label><br /><br />
             
+            <input type="checkbox" id="ProduceImages" name="ProduceImages"><label for="ProduceImages"> Produce Images (Grab images or generate a alert map image. They will be sent over discord and shown on HTML CGENs with image capabilities)</label><br /><br />
+            <input type="checkbox" id="SkipMap" name="SkipMap"><label for="SkipMap"> Skip Map Generation (Skip the map generation if image can't be produced, can be enabled just in case map generation is slowing things down)</label><br /><br />
+
             <h4>Discord webhook configuration</h4>
             <input type="checkbox" id="enable_discord_webhook" name="enable_discord_webhook"><label for="enable_discord_webhook"> Enable Discord webhook.</label>
             <p>The fields below will not have any effect if the box is not selected.</p>
