@@ -1,4 +1,4 @@
-# This is QuantumENDEC, devloped by ApatheticDELL alongside Aaron and BunnyTub
+# This is QuantumENDEC, developed by ApatheticDELL alongside Aaron and BunnyTub
 QuantumENDEC_Version = "QuantumENDEC v5 source"
 
 XMLhistory_Folder = "./history" 
