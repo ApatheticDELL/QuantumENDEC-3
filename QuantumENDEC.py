@@ -1261,8 +1261,15 @@ class Webserver:
                     response.set_cookie(self.SESSION_COOKIE_NAME, session_id, httponly=True)
                     return response
                 else: return jsonify(message='Incorrect password.'), 403
-            
-            return make_response(open('login.html').read()) # Render login page if GET request
+                
+            response = make_response(open('login.html').read())
+            response.status_code = 401
+            return response # Render login page if GET request
+        
+        @self.QEWEB_flaskapp.route('/authenticated', methods=['GET'])
+        def authenticated():
+            response = make_response('', 200)
+            return response # This returns 200, but won't if logged out, because this isn't a public path
 
         @self.QEWEB_flaskapp.route('/upload_config', methods=['POST'])
         def upload_config():
@@ -1848,7 +1855,6 @@ class AIOMG:
                 else:
                     print("[AIOMG]: Alert map generation is not available or is set to skip.")
                     shutil.copy(f"{Assets_Folder}/fallbackImage.png", self.ImageOutput)
-                
                 print("[AIOMG]: Image generation finished")
             except Exception as e:
                 print("[AIOMG]: Image generation failure: ", e)
@@ -2222,11 +2228,11 @@ class Logger:
 
         print("[Logger]: Finished logging.")
 
+        #awesome
+
 def RelayLoop():
     while QEinterrupt() is False:
         Clear()
-        with open(Config_File, "r") as JCfile: config = JCfile.read()
-        ConfigData = json.loads(config)
         
         print(f"[RELAY]: Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
